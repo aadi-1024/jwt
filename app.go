@@ -130,6 +130,7 @@ func (a App) Init() tea.Cmd {
 }
 
 func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	a.error = false
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -158,6 +159,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			_, err := a.updateContent()
 			if err != nil {
 				a.output = err.Error()
+				a.error = true
 			} else {
 				a.output = "Verified"
 			}
@@ -167,6 +169,7 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			err := clipboard.WriteAll(a.inputs[0].Value())
 			if err != nil {
 				a.output = err.Error()
+				a.error = true
 			}
 			return a, textarea.Blink
 		}
@@ -182,6 +185,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a App) View() string {
+	var color string
+	if a.error {
+		color = "#ffbbbb"
+	} else {
+		color = "#bbffbb"
+	}
 	vertical := lipgloss.NewStyle().Width(a.width / 3).Render(lipgloss.JoinVertical(lipgloss.Center, a.inputs[1].View(), a.inputs[2].View(), a.inputs[3].View()))
-	return lipgloss.NewStyle().Height(a.height).AlignVertical(lipgloss.Center).Render(lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Width(a.width/3).Render(a.inputs[0].View()), vertical, lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Foreground(lipgloss.Color("#bbffbb")).Width(a.width/3).Render(a.output)))
+	return lipgloss.NewStyle().Height(a.height).AlignVertical(lipgloss.Center).Render(lipgloss.JoinHorizontal(lipgloss.Center, lipgloss.NewStyle().Width(a.width/3).Render(a.inputs[0].View()), vertical, lipgloss.JoinVertical(lipgloss.Center, lipgloss.NewStyle().AlignHorizontal(lipgloss.Center).Foreground(lipgloss.Color(color)).Width(a.width/3).Render(a.output), lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).AlignHorizontal(lipgloss.Center).Render("Keybinds:\n\nCtrl+Z: calculate, Ctrl+X: copy token\n\nCtrl+C: clear, Ctrl+Arrow: navigate\n\n Ctrl+Q: quit"))))
 }
